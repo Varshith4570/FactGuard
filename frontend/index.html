@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FactGuard — AI Video Verification</title>
+  <meta name="description" content="FactGuard uses AI to verify factual claims in video and audio content, helping you detect misinformation in real-time." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ── Background orbs ── -->
+  <div class="bg-orb orb1"></div>
+  <div class="bg-orb orb2"></div>
+  <div class="bg-orb orb3"></div>
+
+  <!-- ── Navbar ── -->
+  <nav id="navbar">
+    <div class="brand">
+      <div class="shield-icon">🛡️</div>
+      <span>FactGuard</span>
+    </div>
+    <div id="nav-user" style="display:none;">
+      <span id="nav-username"></span>
+      <button id="nav-logout" class="btn-ghost">Sign out</button>
+    </div>
+  </nav>
+
+  <!-- ── Auth Section ── -->
+  <main id="auth-section">
+    <div class="card glass auth-card">
+      <div class="card-header">
+        <div class="shield-icon large">🛡️</div>
+        <h1>FactGuard</h1>
+        <p class="subtitle">AI-powered video content verification</p>
+      </div>
+
+      <!-- Tab switcher -->
+      <div class="tabs">
+        <button class="tab active" id="tab-login" onclick="switchTab('login')">Sign In</button>
+        <button class="tab"       id="tab-reg"   onclick="switchTab('register')">Create Account</button>
+      </div>
+
+      <!-- Login Form -->
+      <form id="login-form" class="auth-form">
+        <div class="field">
+          <label>Email</label>
+          <input type="email" id="email" placeholder="you@example.com" required />
+        </div>
+        <div class="field">
+          <label>Password</label>
+          <input type="password" id="password" placeholder="••••••••" required />
+        </div>
+        <button type="submit" class="btn-primary" id="login-btn">
+          <span>Sign In</span>
+        </button>
+        <p id="login-err" class="form-err"></p>
+      </form>
+
+      <!-- Register Form -->
+      <form id="register-form" class="auth-form" style="display:none;">
+        <div class="field">
+          <label>Full Name</label>
+          <input type="text" id="reg-name" placeholder="John Doe" required />
+        </div>
+        <div class="field">
+          <label>Email</label>
+          <input type="email" id="reg-email" placeholder="you@example.com" required />
+        </div>
+        <div class="field">
+          <label>Password</label>
+          <input type="password" id="reg-password" placeholder="Min. 6 characters" required />
+        </div>
+        <button type="submit" class="btn-primary" id="reg-btn">
+          <span>Create Account</span>
+        </button>
+        <p id="reg-err" class="form-err"></p>
+        <p id="reg-ok"  class="form-ok"></p>
+      </form>
+    </div>
+  </main>
+
+  <!-- ── Dashboard Section ── -->
+  <section id="dashboard" style="display:none;">
+    <div class="dash-hero">
+      <h2>Verify Content</h2>
+      <p>Upload a video or audio file to analyse for factual accuracy</p>
+    </div>
+
+    <div class="dash-grid">
+
+      <!-- Upload Card -->
+      <div class="card glass upload-card">
+        <h3>📤 Upload Media</h3>
+
+        <div class="drop-zone" id="drop-zone">
+          <div class="drop-icon">🎬</div>
+          <p>Drag & drop a file here, or <label for="video-file" class="link">browse</label></p>
+          <p class="drop-hint">Supported: MP4, AVI, MOV, MKV, MP3, WAV • Max 500 MB</p>
+          <input type="file" id="video-file" accept="video/*,audio/*" hidden />
+        </div>
+
+        <div id="file-preview" class="file-preview" style="display:none;">
+          <span id="file-name"></span>
+          <button class="btn-ghost small" onclick="clearFile()">✕</button>
+        </div>
+
+        <button class="btn-primary full" id="verify-btn" style="margin-top:16px;">
+          <span id="verify-label">🔍 Verify Now</span>
+          <div id="verify-spinner" class="spinner" style="display:none;"></div>
+        </button>
+        <p id="verify-err" class="form-err"></p>
+      </div>
+
+      <!-- Results Card -->
+      <div class="card glass results-card" id="results-card" style="display:none;">
+        <h3>📊 Results</h3>
+
+        <!-- Score ring -->
+        <div class="score-ring-wrap">
+          <svg class="score-ring" viewBox="0 0 120 120">
+            <circle class="ring-bg"   cx="60" cy="60" r="50" />
+            <circle class="ring-fill" cx="60" cy="60" r="50" id="ring-fill" />
+          </svg>
+          <div class="score-center">
+            <span id="score-val">—</span>
+            <small>/ 100</small>
+          </div>
+        </div>
+
+        <div class="score-label" id="score-label"></div>
+
+        <!-- Transcript -->
+        <details class="detail-block">
+          <summary>📝 Transcript</summary>
+          <p id="transcript-text" class="mono-text"></p>
+        </details>
+
+        <!-- Claims -->
+        <div id="claims-list"></div>
+      </div>
+
+    </div><!-- /.dash-grid -->
+
+    <!-- History -->
+    <div class="card glass history-card" id="history-card" style="display:none;">
+      <h3>🕑 Recent Verifications</h3>
+      <div id="history-list"></div>
+    </div>
+
+  </section><!-- /#dashboard -->
+
+  <script src="script.js"></script>
+</body>
+</html>
