@@ -1,15 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>FactGuard — AI Video Verification</title>
-  <meta name="description" content="FactGuard uses AI to verify factual claims in video and audio content, helping you detect misinformation in real-time." />
+  <meta name="description"
+    content="FactGuard uses AI to verify factual claims in video and audio content, helping you detect misinformation in real-time." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
+
+  <!-- ── Toast Notifications ── -->
+  <div id="toast-container" class="toast-container"></div>
 
   <!-- ── Background orbs ── -->
   <div class="bg-orb orb1"></div>
@@ -40,7 +46,7 @@
       <!-- Tab switcher -->
       <div class="tabs">
         <button class="tab active" id="tab-login" onclick="switchTab('login')">Sign In</button>
-        <button class="tab"       id="tab-reg"   onclick="switchTab('register')">Create Account</button>
+        <button class="tab" id="tab-reg" onclick="switchTab('register')">Create Account</button>
       </div>
 
       <!-- Login Form -->
@@ -72,12 +78,16 @@
         <div class="field">
           <label>Password</label>
           <input type="password" id="reg-password" placeholder="Min. 6 characters" required />
+          <div class="password-strength">
+            <div class="strength-bar" id="strength-bar"></div>
+          </div>
+          <small id="strength-text" class="strength-text"></small>
         </div>
         <button type="submit" class="btn-primary" id="reg-btn">
           <span>Create Account</span>
         </button>
         <p id="reg-err" class="form-err"></p>
-        <p id="reg-ok"  class="form-ok"></p>
+        <p id="reg-ok" class="form-ok"></p>
       </form>
     </div>
   </main>
@@ -102,10 +112,17 @@
           <input type="file" id="video-file" accept="video/*,audio/*" hidden />
         </div>
 
+
+
         <div id="file-preview" class="file-preview" style="display:none;">
+          <div id="media-preview-container" class="media-preview-container">
+            <div id="media-thumb" class="media-thumb"></div>
+          </div>
           <span id="file-name"></span>
-          <button class="btn-ghost small" onclick="clearFile()">✕</button>
+          <button class="btn-ghost small" onclick="clearFile()" aria-label="Remove file">✕</button>
         </div>
+
+
 
         <button class="btn-primary full" id="verify-btn" style="margin-top:16px;">
           <span id="verify-label">🔍 Verify Now</span>
@@ -121,7 +138,7 @@
         <!-- Score ring -->
         <div class="score-ring-wrap">
           <svg class="score-ring" viewBox="0 0 120 120">
-            <circle class="ring-bg"   cx="60" cy="60" r="50" />
+            <circle class="ring-bg" cx="60" cy="60" r="50" />
             <circle class="ring-fill" cx="60" cy="60" r="50" id="ring-fill" />
           </svg>
           <div class="score-center">
@@ -154,4 +171,5 @@
 
   <script src="script.js"></script>
 </body>
+
 </html>

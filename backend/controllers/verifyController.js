@@ -53,11 +53,14 @@ async function transcribeAudio(filePath) {
 
 // ─── Extract Claims via Groq ───────────────────────────────────────────────
 async function extractClaims(transcript) {
-    const prompt = `Extract all distinct factual claims from the following text. Return ONLY a valid JSON array of strings, no other text.
+    const prompt = `You are a fact-checking assistant. Your task is to extract all distinct factual claims from the following text.
+If the text is not in English, first translate it to English internally, and then extract the claims in English.
+Always output the claims in English, regardless of the original language.
+Return ONLY a valid JSON array of strings, no other text.
 
 Text: "${transcript.substring(0, 3000)}"
 
-Return format: ["claim 1", "claim 2", ...]`;
+Return format: ["translated English claim 1", "translated English claim 2", ...]`;
 
     const groq = getGroq();
     const result = await groq.chat.completions.create({
@@ -98,14 +101,14 @@ async function searchClaim(claim) {
 
 // ─── Verify Claims via Groq + SerpAPI ──────────────────────────────────────
 async function verifyClaims(claims) {
-    const verifiedDetails = [];
     let totalScore = 0;
 
     // Limit to 5 claims to save API quota
     const claimsToCheck = claims.slice(0, 5);
     const groq = getGroq();
 
-    for (const claim of claimsToCheck) {
+    // Parallelize the API calls
+    const verifyPromises = claimsToCheck.map(async (claim) => {
         let snippets = '';
         try {
             snippets = await searchClaim(claim);
@@ -114,24 +117,34 @@ async function verifyClaims(claims) {
         }
 
         const prompt = `Based on the search results below, rate this claim from 0 (completely false) to 10 (completely true).
+If no search results are available, use your own knowledge to rate it.
 Return ONLY a single integer between 0 and 10, nothing else.
 
 Claim: "${claim}"
 Search results:
 ${snippets || 'No search results available'}`;
 
-        const result = await groq.chat.completions.create({
-            messages: [{ role: "user", content: prompt }],
-            model: "llama-3.1-8b-instant",
-            temperature: 0,
-        });
+        try {
+            const result = await groq.chat.completions.create({
+                messages: [{ role: "user", content: prompt }],
+                model: "llama-3.1-8b-instant",
+                temperature: 0,
+            });
 
-        const scoreText = result.choices[0].message.content.trim();
-        const score = parseInt(scoreText.replace(/[^0-9]/g, ''), 10);
-        const finalScore = isNaN(score) ? 5 : Math.min(10, Math.max(0, score));
+            const scoreText = result.choices[0].message.content.trim();
+            const score = parseInt(scoreText.replace(/[^0-9]/g, ''), 10);
+            const finalScore = isNaN(score) ? 5 : Math.min(10, Math.max(0, score));
+            return { claim, score: finalScore, snippets };
+        } catch (err) {
+            console.error("Groq verification error for claim:", claim, err);
+            return { claim, score: 5, snippets }; // Default to 5 on error
+        }
+    });
 
-        verifiedDetails.push({ claim, score: finalScore, snippets });
-        totalScore += finalScore;
+    const verifiedDetails = await Promise.all(verifyPromises);
+
+    for (const detail of verifiedDetails) {
+        totalScore += detail.score;
     }
 
     const avgScore = claimsToCheck.length > 0
@@ -156,7 +169,12 @@ exports.verifyFile = async (req, res) => {
         }
 
         // Extract claims
-        const claims = await extractClaims(transcript);
+        let claims = await extractClaims(transcript);
+
+        // Fallback for short phrases or non-English inputs where LLM extracts 0 claims
+        if (!claims || claims.length === 0) {
+            claims = [transcript];
+        }
 
         // Verify claims
         const verification = await verifyClaims(claims);

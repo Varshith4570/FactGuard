@@ -1,6 +1,6 @@
 'use strict';
 
-const API = 'http://localhost:5000/api';
+const API = '/api';
 let token = null;
 let userName = '';
 
@@ -13,8 +13,27 @@ function setLoading(btnId, spinnerId, labelId, loading) {
     $(labelId).style.display = loading ? 'none' : 'inline';
 }
 
-function showErr(id, msg) { $(id).textContent = msg; }
-function clearErr(id) { $(id).textContent = ''; }
+function showToast(msg, type = 'info') {
+    const container = $('toast-container');
+    if (!container) return;
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    let icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+    toast.innerHTML = `<span>${icon}</span> <span>${msg}</span>`;
+    container.appendChild(toast);
+
+    // Trigger animation
+    requestAnimationFrame(() => toast.classList.add('show'));
+
+    // Remove after 3s
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 400); // Wait for transition
+    }, 3000);
+}
+
+function showErr(id, msg) { showToast(msg, 'error'); }
+function clearErr(id) { /* No-op, managed by toasts now */ }
 
 // ─── Tab Switcher ─────────────────────────────────────────────────────────────
 function switchTab(tab) {
@@ -45,12 +64,52 @@ $('register-form').addEventListener('submit', async e => {
         });
         const data = await res.json();
         if (!res.ok) { showErr('reg-err', data.error || 'Registration failed'); return; }
-        $('reg-ok').textContent = '✅ Account created! Please sign in.';
+        showToast('Account created successfully! Please log in.', 'success');
         $('register-form').reset();
         setTimeout(() => switchTab('login'), 1500);
     } catch {
         showErr('reg-err', 'Network error — is the server running?');
     }
+});
+
+// Password Strength Meter Logic
+$('reg-password').addEventListener('input', (e) => {
+    const val = e.target.value;
+    const bar = $('strength-bar');
+    const txt = $('strength-text');
+
+    if (!val) {
+        bar.style.width = '0%';
+        txt.textContent = '';
+        return;
+    }
+
+    let strength = 0;
+    if (val.length >= 6) strength += 1;
+    if (val.length >= 10) strength += 1;
+    if (/[A-Z]/.test(val)) strength += 1;
+    if (/[0-9]/.test(val)) strength += 1;
+    if (/[^A-Za-z0-9]/.test(val)) strength += 1;
+
+    let pct = '0%';
+    let color = '';
+    let label = '';
+
+    if (strength <= 1) { pct = '25%'; color = '#ef4444'; label = 'Weak'; }
+    else if (strength <= 3) { pct = '60%'; color = '#f59e0b'; label = 'Good'; }
+    else { pct = '100%'; color = '#22c55e'; label = 'Strong'; }
+
+    // Required minimum length coloring override
+    if (val.length < 6) {
+        color = '#ef4444';
+        label = 'Too short';
+        pct = '15%';
+    }
+
+    bar.style.width = pct;
+    bar.style.backgroundColor = color;
+    txt.textContent = label;
+    txt.style.color = color;
 });
 
 // ─── Login ────────────────────────────────────────────────────────────────────
@@ -72,6 +131,7 @@ $('login-form').addEventListener('submit', async e => {
 
         token = data.token;
         userName = data.user.name;
+        showToast(`Welcome back, ${userName}!`, 'success');
 
         $('auth-section').style.display = 'none';
         $('dashboard').style.display = 'block';
@@ -122,20 +182,48 @@ function setFile(file) {
     $('file-preview').style.display = 'flex';
     dropZone.style.display = 'none';
     clearErr('verify-err');
+
+    // Generate media preview
+    const thumbContainer = $('media-thumb');
+    thumbContainer.innerHTML = ''; // Clear previous
+
+    if (file.type.startsWith('video/')) {
+        const url = URL.createObjectURL(file);
+        const video = document.createElement('video');
+        video.src = url;
+        video.muted = true;
+        video.style.width = '100%';
+        video.style.height = '100%';
+        video.style.objectFit = 'cover';
+        video.onloadeddata = () => {
+            video.currentTime = Math.min(1, video.duration / 2); // Seek to 1s or middle
+        };
+        thumbContainer.appendChild(video);
+    } else if (file.type.startsWith('audio/')) {
+        thumbContainer.innerHTML = '<span class="audio-icon">🎵</span>';
+    } else {
+        thumbContainer.innerHTML = '<span class="audio-icon">📄</span>';
+    }
 }
 
 function clearFile() {
     fileInput.value = '';
     $('file-preview').style.display = 'none';
     dropZone.style.display = 'block';
+
+    // Revoke any created object URLs to prevent memory leaks
+    const video = $('media-thumb').querySelector('video');
+    if (video) URL.revokeObjectURL(video.src);
 }
 
 // ─── Verify ───────────────────────────────────────────────────────────────────
 $('verify-btn').addEventListener('click', async () => {
     clearErr('verify-err');
 
-    if (!fileInput.files[0]) {
-        showErr('verify-err', 'Please select a file first.');
+    const file = fileInput.files[0];
+
+    if (!file) {
+        showErr('verify-err', 'Please select a file to verify first.');
         return;
     }
 
@@ -143,14 +231,24 @@ $('verify-btn').addEventListener('click', async () => {
 
     try {
         const fd = new FormData();
-        fd.append('video', fileInput.files[0]);
+        fd.append('video', file);
 
         const res = await fetch(`${API}/verify/file`, {
             method: 'POST',
             headers: { 'x-auth-token': token },
             body: fd,
         });
-        const data = await res.json();
+
+        const rawText = await res.text();
+        let data;
+        try {
+            data = JSON.parse(rawText);
+        } catch (e) {
+            console.error("Backend returned non-JSON:", rawText);
+            const statusErr = res.status === 504 ? "Proxy Timeout (takes too long)" : "Server Error";
+            showErr('verify-err', `${statusErr}: Unexpected response from server. Check console.`);
+            return;
+        }
 
         if (!res.ok) {
             showErr('verify-err', data.error || 'Verification failed');
@@ -158,6 +256,7 @@ $('verify-btn').addEventListener('click', async () => {
         }
 
         displayResults(data);
+        showToast('Verification complete!', 'success');
         loadHistory();
     } catch (err) {
         showErr('verify-err', 'Network error: ' + err.message);
@@ -184,7 +283,23 @@ function displayResults({ transcript, score, details }) {
     else { color = '#ef4444'; label = '❌ Likely Inaccurate'; }
     ring.style.stroke = color;
 
-    $('score-val').textContent = score;
+    // Animate score number counting up
+    const scoreVal = $('score-val');
+    let startTimestamp = null;
+    const duration = 1200; // ms
+    const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+        // Easing function for smoother stop
+        const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+        scoreVal.textContent = Math.floor(easeOutQuart * score);
+        if (progress < 1) {
+            window.requestAnimationFrame(step);
+        } else {
+            scoreVal.textContent = score; // Ensure exact final value
+        }
+    };
+    window.requestAnimationFrame(step);
     const lbl = $('score-label');
     lbl.textContent = label;
     lbl.style.background = color + '22';
@@ -228,12 +343,24 @@ async function loadHistory() {
         const list = $('history-list');
         list.innerHTML = '';
 
+        if (!data || data.length === 0) {
+            list.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">👻</div>
+                    <p>You haven't verified any content yet.<br>Upload a video above to get started!</p>
+                </div>
+            `;
+            return;
+        }
+
         data.forEach(r => {
             const score = r.verificationScore || 0;
             const color = score >= 70 ? '#22c55e' : score >= 40 ? '#f59e0b' : '#ef4444';
             const date = new Date(r.createdAt).toLocaleDateString();
             const el = document.createElement('div');
             el.className = 'hist-item';
+            el.style.cursor = 'pointer';
+            el.title = 'Click to view full details';
             el.innerHTML = `
         <div>
           <div>${r.input || 'Uploaded file'}</div>
@@ -241,7 +368,27 @@ async function loadHistory() {
         </div>
         <span class="hist-score" style="background:${color}22;color:${color};">${score}%</span>
       `;
+
+            // Add click listener to view past report
+            el.addEventListener('click', () => {
+                displayResults({
+                    id: r._id,
+                    transcript: r.transcript,
+                    score: r.verificationScore,
+                    details: r.details || []
+                });
+
+                // Hide file preview if viewing history
+                $('file-preview').style.display = 'none';
+                $('drop-zone').style.display = 'block';
+
+                // Scroll up to see it
+                $('dashboard').scrollIntoView({ behavior: 'smooth' });
+                showToast(`Viewing past report for: ${r.input || 'File'}`, 'info');
+            });
+
             list.appendChild(el);
         });
     } catch { /* silently fail */ }
 }
+
