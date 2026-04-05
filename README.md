@@ -2,7 +2,7 @@
 
 **AI-Powered Video Content Verification**
 
-FactGuard transcribes video/audio using Vosk (offline speech recognition), extracts factual claims via Groq, verifies them with SerpAPI web searches, and scores each claim for accuracy.
+FactGuard transcribes video/audio using the Groq Whisper API, extracts factual claims via Groq's LLaMA 3 model, verifies them with SerpAPI web searches, and scores each claim for accuracy.
 
 ---
 
@@ -14,7 +14,6 @@ FactGuard/
 │   ├── controllers/verifyController.js
 │   ├── middleware/auth.js, upload.js
 │   ├── models/User.js, Verification.js
-│   ├── python_scripts/transcribe.py
 │   ├── routes/auth.js, verify.js
 │   ├── uploads/           ← auto-created
 │   ├── .env               ← fill in your keys!
@@ -37,7 +36,6 @@ Edit `backend/.env` and replace all placeholder values:
 | `MONGO_URI`      | MongoDB Atlas → Connect → Drivers |
 | `JWT_SECRET`     | Any long random string |
 | `GROQ_API_KEY`   | https://console.groq.com/keys |
-| `OPENAI_API_KEY` | (Deprecated/Optional) |
 | `SERPAPI_KEY`    | https://serpapi.com/manage-api-key |
 
 ---
@@ -45,16 +43,15 @@ Edit `backend/.env` and replace all placeholder values:
 ## Requirements
 
 - **Node.js** v18+
-- **Python** 3.8+
-- **FFmpeg** in PATH
-- Python packages: `vosk`, `imageio[ffmpeg]`, `imageio-ffmpeg`
+- **FFmpeg** in PATH (used for extracting audio from video files)
 
 ---
 
-## Running
+## Running Locally
 
 ```powershell
 # In backend/ folder:
+npm install
 npm run dev         # uses nodemon (auto-restart)
 # or
 npm start           # plain node
@@ -67,7 +64,7 @@ http://localhost:5000
 
 ## Usage
 
-1. Open `http://localhost:5000`
+1. Open the application URL (localhost or deployed URL)
 2. Register an account, then log in
 3. Drag & drop (or browse) a video/audio file
 4. Click **"Verify Now"**
@@ -75,14 +72,11 @@ http://localhost:5000
 
 ---
 
-> **Note:** The first time you run the backend, it will download a small (~40MB) Vosk acoustic model. Please be patient.
-
 ## Troubleshooting
 
 | Problem | Fix |
 |---------|-----|
-| `MongoDB connection error` | Check `MONGO_URI` and Atlas IP whitelist |
-| `Python script error` | Ensure `ffmpeg` is in PATH; run `ffmpeg -version` |
-| `Vosk model download` | First run downloads ~40 MB model — wait for it |
-| `Groq API error` | Check key at console.groq.com |
-| `SerpAPI error` | Free tier = 100 searches/month; check quota |
+| `MongoDB connection error` | Check `MONGO_URI` and Atlas IP whitelist (must include 0.0.0.0/0 if deploying) |
+| `Audio extraction failed` | Ensure `ffmpeg` is installed and added to your system PATH |
+| `Groq API error` | Check your `GROQ_API_KEY` at console.groq.com |
+| `SerpAPI error` | Free tier = 100 searches/month; check your quota if verifications fail |

@@ -214,3 +214,34 @@ exports.getHistory = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+// ─── Controller: Get Stats for Dashboard ───────────────────────────────────────
+exports.getStats = async (req, res) => {
+    try {
+        const records = await Verification.find({ user: req.user });
+        
+        const totalVerifications = records.length;
+        let highCount = 0;
+        let midCount = 0;
+        let lowCount = 0;
+        let totalScoreSum = 0;
+
+        records.forEach(r => {
+            totalScoreSum += r.verificationScore || 0;
+            const score = r.verificationScore || 0;
+            if (score >= 70) highCount++;
+            else if (score >= 40) midCount++;
+            else lowCount++;
+        });
+
+        const avgScore = totalVerifications > 0 ? Math.round(totalScoreSum / totalVerifications) : 0;
+        
+        res.json({
+            totalVerifications,
+            avgScore,
+            distribution: { high: highCount, mid: midCount, low: lowCount }
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};

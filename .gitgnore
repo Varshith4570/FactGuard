@@ -1,6 +1,0 @@
-.env
-backend/.env
-node_modules/
-dist/
-.vscode/
-*.log

@@ -5,14 +5,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>FactGuard — AI Video Verification</title>
-  <meta name="description"
-    content="FactGuard uses AI to verify factual claims in video and audio content, helping you detect misinformation in real-time." />
+  <meta name="description" content="FactGuard uses AI to verify factual claims in video and audio content." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="stylesheet" href="style.css" />
 </head>
 
-<body>
+<body class="theme-dark">
 
   <!-- ── Toast Notifications ── -->
   <div id="toast-container" class="toast-container"></div>
@@ -22,154 +22,443 @@
   <div class="bg-orb orb2"></div>
   <div class="bg-orb orb3"></div>
 
-  <!-- ── Navbar ── -->
-  <nav id="navbar">
-    <div class="brand">
+  <!-- Global Top Navbar for Unauthenticated Area -->
+  <nav class="auth-top-nav" id="global-unauth-nav">
+    <div class="auth-brand" style="cursor: pointer;" onclick="showLandingPage(); window.scrollTo(0,0);">
       <div class="shield-icon">🛡️</div>
       <span>FactGuard</span>
     </div>
-    <div id="nav-user" style="display:none;">
-      <span id="nav-username"></span>
-      <button id="nav-logout" class="btn-ghost">Sign out</button>
+    <div class="auth-nav-links">
+      <a href="#about-section" onclick="showLandingPage()">About</a>
+      <a href="#contact-section" onclick="showLandingPage()">Support</a>
+      <a href="#help-section" onclick="showLandingPage()">Help</a>
+      <a href="#how-to-use-section" onclick="showLandingPage()">How to Use</a>
+      <a href="#" onclick="showAuthPage()" style="color: var(--accent);">Sign In / Sign Up</a>
     </div>
   </nav>
 
-  <!-- ── Auth Section ── -->
-  <main id="auth-section">
-    <div class="card glass auth-card">
-      <div class="card-header">
-        <div class="shield-icon large">🛡️</div>
-        <h1>FactGuard</h1>
-        <p class="subtitle">AI-powered video content verification</p>
+  <!-- ── Landing Section ── -->
+  <main id="landing-section" style="padding-top: 80px; min-height: 100vh; position:relative; z-index:1; display:none;">
+    <div style="max-width: 1200px; margin: 0 auto; padding: 40px 20px;">
+      
+      <!-- Hero -->
+      <div style="text-align: center; margin-bottom: 60px;">
+        <h1 style="font-size: 3.5rem; font-weight: 700; margin-bottom: 20px; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Ensure Truth in Media.</h1>
+        <p style="font-size: 1.2rem; color: var(--text2); max-width: 800px; margin: 0 auto; line-height: 1.6;">
+          FactGuard uses advanced Llama 3.1 LLM and Whisper AI to scan audio and video files, extracting claims and verifying them against trusted sources automatically.
+        </p>
+        <button class="btn-primary" style="margin: 30px auto 0; font-size: 1.1rem; padding: 16px 40px;" onclick="showAuthPage()">Get Started</button>
       </div>
 
-      <!-- Tab switcher -->
-      <div class="tabs">
-        <button class="tab active" id="tab-login" onclick="switchTab('login')">Sign In</button>
-        <button class="tab" id="tab-reg" onclick="switchTab('register')">Create Account</button>
+      <!-- About Section -->
+      <div id="about-section" class="card glass" style="margin-bottom: 60px;">
+        <h2 style="margin-bottom: 20px; color: var(--accent2); font-size: 2rem;">About FactGuard</h2>
+        <p style="color: var(--text); line-height: 1.8; font-size: 1.1rem; margin-bottom: 20px;">
+          FactGuard is an open-source, automated fact-checking pipeline. We understand that in the modern era of deepfakes and AI-generated hallucinations, verifying the truth requires tools that act faster than disinformation spreads. FactGuard transcribes your media and flags every claim with a probability score.
+        </p>
+        <p style="color: var(--text); line-height: 1.8; font-size: 1.1rem;">
+          Misinformation rapidly propagates through visual and auditory media where it escapes traditional text-based fact checkers. FactGuard bridges this gap, giving journalists, researchers, and general citizens the enterprise-grade power to drag-and-drop a video and receive instant truth scores. By cross-referencing isolated statements through SerpAPI against millions of databases, FactGuard provides a transparent line of credible reality.
+        </p>
       </div>
 
-      <!-- Login Form -->
-      <form id="login-form" class="auth-form">
-        <div class="field">
-          <label>Email</label>
-          <input type="email" id="email" placeholder="you@example.com" required />
-        </div>
-        <div class="field">
-          <label>Password</label>
-          <input type="password" id="password" placeholder="••••••••" required />
-        </div>
-        <button type="submit" class="btn-primary" id="login-btn">
-          <span>Sign In</span>
-        </button>
-        <p id="login-err" class="form-err"></p>
-      </form>
-
-      <!-- Register Form -->
-      <form id="register-form" class="auth-form" style="display:none;">
-        <div class="field">
-          <label>Full Name</label>
-          <input type="text" id="reg-name" placeholder="John Doe" required />
-        </div>
-        <div class="field">
-          <label>Email</label>
-          <input type="email" id="reg-email" placeholder="you@example.com" required />
-        </div>
-        <div class="field">
-          <label>Password</label>
-          <input type="password" id="reg-password" placeholder="Min. 6 characters" required />
-          <div class="password-strength">
-            <div class="strength-bar" id="strength-bar"></div>
+      <!-- How to Use Section -->
+      <div id="how-to-use-section" class="card glass" style="margin-bottom: 60px;">
+        <h2 style="margin-bottom: 20px; color: var(--accent2); font-size: 2rem;">How to Use FactGuard</h2>
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+          <div style="display: flex; gap: 20px; align-items: flex-start;">
+            <div style="font-size: 2rem; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 50%;">1️⃣</div>
+            <div>
+              <h3 style="font-size: 1.3rem; margin-bottom: 8px;">Upload Media</h3>
+              <p style="color: var(--text2); line-height: 1.5; font-size: 1.05rem;">Navigate to your Dashboard and drag-and-drop any MP4, MP3, or WAV file into the verification zone (Max 500MB).</p>
+            </div>
           </div>
-          <small id="strength-text" class="strength-text"></small>
+          <div style="display: flex; gap: 20px; align-items: flex-start;">
+            <div style="font-size: 2rem; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 50%;">2️⃣</div>
+            <div>
+              <h3 style="font-size: 1.3rem; margin-bottom: 8px;">Automated Analysis</h3>
+              <p style="color: var(--text2); line-height: 1.5; font-size: 1.05rem;">Click 'Verify'. The system utilizes Groq's high-speed Whisper AI to instantly extract audio and transcribe it, piping the text directly into the Llama LLM for claim separation.</p>
+            </div>
+          </div>
+          <div style="display: flex; gap: 20px; align-items: flex-start;">
+            <div style="font-size: 2rem; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 50%;">3️⃣</div>
+            <div>
+              <h3 style="font-size: 1.3rem; margin-bottom: 8px;">Review Results</h3>
+              <p style="color: var(--text2); line-height: 1.5; font-size: 1.05rem;">A percentage credibility score is ultimately rendered. You can view distinct flags for True, False, or Partially True statements on your dashboard.</p>
+            </div>
+          </div>
         </div>
-        <button type="submit" class="btn-primary" id="reg-btn">
-          <span>Create Account</span>
-        </button>
-        <p id="reg-err" class="form-err"></p>
-        <p id="reg-ok" class="form-ok"></p>
-      </form>
+      </div>
+
+      <!-- Help Section -->
+      <div id="help-section" class="card glass" style="margin-bottom: 60px;">
+        <h2 style="margin-bottom: 20px; color: var(--accent2); font-size: 2rem;">Help & FAQ</h2>
+        <details class="detail-block" style="margin-bottom: 12px;">
+          <summary style="font-size: 1.1rem; padding: 5px;">Why did my upload fail?</summary>
+          <p class="mono-text" style="padding: 10px;">Files over 500MB or unsupported codecs might fail. Try converting your file to standard MP4 or MP3 formats before uploading. Make sure your network does not block localhost upload streams.</p>
+        </details>
+        <details class="detail-block" style="margin-bottom: 12px;">
+          <summary style="font-size: 1.1rem; padding: 5px;">How is the accuracy score computed?</summary>
+          <p class="mono-text" style="padding: 10px;">The overarching score is an average of the individual certainty scores produced by the LLM fact-checking pipeline for each distinct claim isolated from the transcript.</p>
+        </details>
+        <details class="detail-block" style="margin-bottom: 12px;">
+          <summary style="font-size: 1.1rem; padding: 5px;">Are my videos stored permanently?</summary>
+          <p class="mono-text" style="padding: 10px;">No. Your files are temporarily stored for extraction within the /uploads/ directory and deleted immediately after processing via FFmpeg.</p>
+        </details>
+      </div>
+
+      <!-- Authors -->
+      <div class="card glass" style="margin-bottom: 60px; text-align: center;" id="help-section">
+        <h2 style="margin-bottom: 30px; font-size: 2rem;">Authors & Contributors</h2>
+        <div style="display: flex; justify-content: center; gap: 40px; flex-wrap: wrap;">
+          <div style="padding: 20px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px solid var(--border); min-width: 200px;">
+            <div style="font-size: 2.5rem; margin-bottom: 10px;">👨‍💻</div>
+            <strong style="font-size: 1.1rem;">A Komal Kumar</strong>
+          </div>
+          <div style="padding: 20px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px solid var(--border); min-width: 200px;">
+            <div style="font-size: 2.5rem; margin-bottom: 10px;">👨‍💻</div>
+            <strong style="font-size: 1.1rem;">A Karthik</strong>
+          </div>
+          <div style="padding: 20px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px solid var(--border); min-width: 200px;">
+            <div style="font-size: 2.5rem; margin-bottom: 10px;">👨‍💻</div>
+            <strong style="font-size: 1.1rem;">D Varshith Reddy</strong>
+          </div>
+          <div style="padding: 20px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px solid var(--border); min-width: 200px;">
+            <div style="font-size: 2.5rem; margin-bottom: 10px;">👩‍💻</div>
+            <strong style="font-size: 1.1rem;">S Pallavi</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contact -->
+      <div class="card glass" style="text-align: center; max-width: 600px; margin: 0 auto;" id="contact-section">
+        <h2 style="margin-bottom: 15px;">Contact Us</h2>
+        <p style="color: var(--text2); font-size: 1.1rem; margin-bottom: 20px;">Have questions? Reach out to our lead developers directly.</p>
+        <div style="font-size: 1.5rem; font-weight: 700; color: var(--accent);">📞 7386309294</div>
+      </div>
+
     </div>
   </main>
 
-  <!-- ── Dashboard Section ── -->
-  <section id="dashboard" style="display:none;">
-    <div class="dash-hero">
-      <h2>Verify Content</h2>
-      <p>Upload a video or audio file to analyse for factual accuracy</p>
-    </div>
-
-    <div class="dash-grid">
-
-      <!-- Upload Card -->
-      <div class="card glass upload-card">
-        <h3>📤 Upload Media</h3>
-
-        <div class="drop-zone" id="drop-zone">
-          <div class="drop-icon">🎬</div>
-          <p>Drag & drop a file here, or <label for="video-file" class="link">browse</label></p>
-          <p class="drop-hint">Supported: MP4, AVI, MOV, MKV, MP3, WAV • Max 500 MB</p>
-          <input type="file" id="video-file" accept="video/*,audio/*" hidden />
-        </div>
-
-
-
-        <div id="file-preview" class="file-preview" style="display:none;">
-          <div id="media-preview-container" class="media-preview-container">
-            <div id="media-thumb" class="media-thumb"></div>
-          </div>
-          <span id="file-name"></span>
-          <button class="btn-ghost small" onclick="clearFile()" aria-label="Remove file">✕</button>
-        </div>
-
-
-
-        <button class="btn-primary full" id="verify-btn" style="margin-top:16px;">
-          <span id="verify-label">🔍 Verify Now</span>
-          <div id="verify-spinner" class="spinner" style="display:none;"></div>
-        </button>
-        <p id="verify-err" class="form-err"></p>
-      </div>
-
-      <!-- Results Card -->
-      <div class="card glass results-card" id="results-card" style="display:none;">
-        <h3>📊 Results</h3>
-
-        <!-- Score ring -->
-        <div class="score-ring-wrap">
-          <svg class="score-ring" viewBox="0 0 120 120">
-            <circle class="ring-bg" cx="60" cy="60" r="50" />
-            <circle class="ring-fill" cx="60" cy="60" r="50" id="ring-fill" />
-          </svg>
-          <div class="score-center">
-            <span id="score-val">—</span>
-            <small>/ 100</small>
+  <!-- ── Auth Section ── -->
+  <main id="auth-section" style="display:none; padding-top: 80px;">
+    <div class="auth-split-container">
+      
+      <!-- Left Panel: Interactive About Section -->
+      <div class="auth-about-panel glass">
+        <h2>Unmask AI Disinformation.</h2>
+        <p>FactGuard processes audio and video in real-time, leveraging modern open-source LLMs to instantly fact-check public speeches and articles.</p>
+        
+        <div class="about-feature">
+          <div class="feat-icon">⚡</div>
+          <div class="feat-text">
+            <strong>Sub-second Transcription</strong>
+            <span>Our custom pipeline transcodes and transcribes large files fast.</span>
           </div>
         </div>
 
-        <div class="score-label" id="score-label"></div>
+        <div class="about-feature">
+          <div class="feat-icon">🔍</div>
+          <div class="feat-text">
+            <strong>Deep Web Cross-Referencing</strong>
+            <span>Isolated claims are pinged against SerAPI databases to fetch relevant truth sources.</span>
+          </div>
+        </div>
 
-        <!-- Transcript -->
-        <details class="detail-block">
-          <summary>📝 Transcript</summary>
-          <p id="transcript-text" class="mono-text"></p>
-        </details>
-
-        <!-- Claims -->
-        <div id="claims-list"></div>
+        <div class="about-feature">
+          <div class="feat-icon">📊</div>
+          <div class="feat-text">
+            <strong>Analytics & Tracking</strong>
+            <span>Store your history and chart your verification credibility automatically.</span>
+          </div>
+        </div>
       </div>
 
-    </div><!-- /.dash-grid -->
+      <!-- Right Panel: Auth Card -->
+      <div class="card glass auth-card">
+        <div class="card-header" style="margin-bottom: 24px;">
+          <h1>Welcome Back</h1>
+          <p class="subtitle" style="color: var(--text2);">Enterprise AI Content Verification</p>
+        </div>
 
-    <!-- History -->
-    <div class="card glass history-card" id="history-card" style="display:none;">
-      <h3>🕑 Recent Verifications</h3>
-      <div id="history-list"></div>
+        <!-- Tab switcher -->
+        <div class="tabs" id="auth-tabs">
+          <button class="tab active" id="tab-login" onclick="switchTab('login')">Sign In</button>
+          <button class="tab" id="tab-reg" onclick="switchTab('register')">Create Account</button>
+        </div>
+
+        <!-- Login Form -->
+        <form id="login-form" class="auth-form">
+          <div class="field">
+            <label>Username or Email</label>
+            <input type="text" id="login-identifier" placeholder="johndoe or you@example.com" required />
+          </div>
+          <div class="field">
+            <label>Password</label>
+            <input type="password" id="password" placeholder="••••••••" required />
+          </div>
+          <div style="text-align: right;">
+            <a class="link" style="font-size: 0.85rem;" onclick="switchTab('forgot-password')">Forgot Password?</a>
+          </div>
+          <button type="submit" class="btn-primary" id="login-btn">
+            <span>Sign In</span>
+          </button>
+        </form>
+
+        <!-- Register Form -->
+        <form id="register-form" class="auth-form" style="display:none;">
+          <div class="field">
+            <label>Full Name</label>
+            <input type="text" id="reg-name" placeholder="John Doe" required />
+          </div>
+          <div class="field">
+            <label>Username</label>
+            <input type="text" id="reg-username" placeholder="johndoe123" required />
+          </div>
+          <div class="field">
+            <label>Email</label>
+            <input type="email" id="reg-email" placeholder="you@example.com" required />
+          </div>
+          <div class="field">
+            <label>Password</label>
+            <input type="password" id="reg-password" placeholder="Min. 6 characters" required />
+            <div class="password-strength">
+              <div class="strength-bar" id="strength-bar"></div>
+            </div>
+            <small id="strength-text" class="strength-text"></small>
+          </div>
+          <button type="submit" class="btn-primary" id="reg-btn">
+            <span>Create Account</span>
+          </button>
+        </form>
+
+        <!-- Forgot Password Form -->
+        <form id="forgot-form" class="auth-form" style="display:none;">
+          <p style="font-size: .9rem; color: var(--text2); text-align: center; margin-bottom: 10px;">Enter your registered email to receive an OTP.</p>
+          <div class="field">
+            <label>Email</label>
+            <input type="email" id="forgot-email" placeholder="you@example.com" required />
+          </div>
+          <button type="submit" class="btn-primary" id="forgot-btn">
+            <span>Send OTP</span>
+          </button>
+          <div style="text-align: center; margin-top: 10px;">
+            <a class="link" style="font-size: 0.85rem;" onclick="switchTab('login')">Back to Login</a>
+          </div>
+        </form>
+
+        <!-- Reset Password Form -->
+        <form id="reset-form" class="auth-form" style="display:none;">
+          <p style="font-size: .9rem; color: var(--text2); text-align: center; margin-bottom: 10px;">Enter the 6-digit OTP sent to your email.</p>
+          <div class="field">
+            <label>6-Digit OTP</label>
+            <input type="text" id="reset-otp" placeholder="123456" required />
+          </div>
+          <div class="field">
+            <label>New Password</label>
+            <input type="password" id="reset-new-password" placeholder="••••••••" required />
+          </div>
+          <button type="submit" class="btn-primary" id="reset-btn">
+            <span>Reset Password</span>
+          </button>
+        </form>
+
+      </div>
     </div>
+  </main>
 
-  </section><!-- /#dashboard -->
+  <!-- ── Main App Container (Sidebar + Content) ── -->
+  <div id="app-container" style="display:none;">
+    
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar glass">
+      <div class="sidebar-header">
+        <div class="shield-icon">🛡️</div>
+        <h2>FactGuard</h2>
+      </div>
+      
+      <div class="sidebar-user">
+        <div class="avatar" id="nav-avatar">U</div>
+        <div class="user-info">
+          <span id="nav-username" class="nav-uname">Username</span>
+          <span class="nav-role">Pro User</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a class="nav-link active" onclick="switchView('home')" id="link-home">
+          <span class="nav-icon">📊</span> Dashboard
+        </a>
+        <a class="nav-link" onclick="switchView('verify')" id="link-verify">
+          <span class="nav-icon">🎬</span> New Verification
+        </a>
+        <a class="nav-link" onclick="switchView('history')" id="link-history">
+          <span class="nav-icon">🕑</span> History
+        </a>
+        <a class="nav-link" onclick="switchView('about')" id="link-about">
+          <span class="nav-icon">ℹ️</span> About
+        </a>
+        <a class="nav-link" onclick="switchView('support')" id="link-support">
+          <span class="nav-icon">🎧</span> Support
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button id="nav-logout" class="btn-sidebar">🚪 Sign Out</button>
+        <button id="theme-toggle" class="btn-sidebar">🌙 Theme Toggle</button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main id="main-content">
+
+      <!-- View: Home -->
+      <section id="view-home" class="view-section active">
+        <div class="dash-header">
+          <h2>Analytics Dashboard</h2>
+          <p>Welcome back! Here's an overview of your verification history.</p>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card glass">
+            <h3>Total Verifications</h3>
+            <div class="stat-val" id="stat-total">-</div>
+          </div>
+          <div class="stat-card glass">
+            <h3>Average Accuracy</h3>
+            <div class="stat-val" id="stat-avg">-</div>
+          </div>
+        </div>
+        <div class="charts-container glass">
+          <div class="chart-wrapper">
+            <canvas id="accuracyChart"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- View: Verify -->
+      <section id="view-verify" class="view-section" style="display:none;">
+        <div class="dash-header">
+          <h2>Verify Content</h2>
+          <p>Upload media to transcribe and fact-check all claims automatically.</p>
+        </div>
+
+        <div class="dash-grid">
+          <!-- Upload Card -->
+          <div class="card glass upload-card">
+            <h3>📤 Upload Media</h3>
+            <div class="drop-zone" id="drop-zone">
+              <div class="drop-icon">🎬</div>
+              <p>Drag & drop a file here, or <label for="video-file" class="link">browse</label></p>
+              <p class="drop-hint">Supported: MP4, AVI, MOV, MKV, MP3, WAV • Max 500 MB</p>
+              <input type="file" id="video-file" accept="video/*,audio/*" hidden />
+            </div>
+
+            <div id="file-preview" class="file-preview" style="display:none;">
+              <div id="media-preview-container" class="media-preview-container">
+                <div id="media-thumb" class="media-thumb"></div>
+              </div>
+              <span id="file-name"></span>
+              <button class="btn-ghost small" onclick="clearFile()" aria-label="Remove file">✕</button>
+            </div>
+
+            <button class="btn-primary full" id="verify-btn" style="margin-top:16px;">
+              <span id="verify-label">🔍 Verify Now</span>
+              <div id="verify-spinner" class="spinner" style="display:none;"></div>
+            </button>
+            
+            <p id="verify-status-text" style="display:none; margin-top: 10px; font-size: 0.9rem; color: var(--accent2); font-weight: 500; text-align: center;"></p>
+          </div>
+
+          <!-- Results Card -->
+          <div class="card glass results-card" id="results-card" style="display:none;">
+            <h3>📊 Results</h3>
+            <div class="score-ring-wrap">
+              <svg class="score-ring" viewBox="0 0 120 120">
+                <circle class="ring-bg" cx="60" cy="60" r="50" />
+                <circle class="ring-fill" cx="60" cy="60" r="50" id="ring-fill" />
+              </svg>
+              <div class="score-center">
+                <span id="score-val">—</span>
+                <small>/ 100</small>
+              </div>
+            </div>
+            <div class="score-label" id="score-label"></div>
+            <details class="detail-block">
+              <summary>📝 Transcript</summary>
+              <p id="transcript-text" class="mono-text"></p>
+            </details>
+            <div id="claims-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- View: History -->
+      <section id="view-history" class="view-section" style="display:none;">
+        <div class="dash-header">
+          <h2>Verification History</h2>
+          <p>Review past analyses and raw transcripts.</p>
+        </div>
+        <div class="card glass history-card" id="history-container">
+          <div id="history-list"></div>
+        </div>
+      </section>
+
+      <!-- View: About -->
+      <section id="view-about" class="view-section" style="display:none;">
+        <div class="dash-header">
+          <h2>About FactGuard</h2>
+          <p>Understanding the architecture.</p>
+        </div>
+        <div class="card glass text-content">
+          <h3>How it Works</h3>
+          <p>FactGuard utilizes Groq's high-speed Whisper AI to transcribe audio locally or remotely in milliseconds. We then parse the text using Llama to isolate factual claims. Each claim is cross-referenced with modern search engines via SerpAPI to triangulate truth scores.</p>
+          <br>
+          <h3>Our Mission</h3>
+          <p>In an era of deepfakes and AI-generated disinformation, fact-checking needs to be accessible, immediate, and transparent. We've built FactGuard to serve journalists, analysts, and everyday consumers.</p>
+        </div>
+      </section>
+
+      <!-- View: Support -->
+      <section id="view-support" class="view-section" style="display:none;">
+        <div class="dash-header">
+          <h2>Support & FAQ</h2>
+          <p>We're here to help.</p>
+        </div>
+        <div class="dash-grid">
+          <div class="card glass">
+            <h3>Frequently Asked Questions</h3>
+            <details class="detail-block">
+              <summary>Why did my upload fail?</summary>
+              <p class="mono-text">Files over 500MB or unsupported codecs might fail. Try converting your file to standard MP4 or MP3.</p>
+            </details>
+            <details class="detail-block">
+              <summary>How is the accuracy score computed?</summary>
+              <p class="mono-text">The overarching score is an average of the individual certainty scores produced by the LLM fact-checking pipeline for each distinct claim.</p>
+            </details>
+            <details class="detail-block">
+              <summary>Are my videos stored permanently?</summary>
+              <p class="mono-text">No. Your files are temporarily stored for extraction and deleted immediately after processing via FFmpeg.</p>
+            </details>
+          </div>
+          <div class="card glass">
+            <h3>Contact Us</h3>
+            <form class="auth-form" onsubmit="event.preventDefault(); showToast('Message Sent!', 'success'); this.reset();">
+              <div class="field">
+                <label>Subject</label>
+                <input type="text" placeholder="Issue or inquiry" required>
+              </div>
+              <div class="field">
+                <label>Message</label>
+                <textarea rows="4" style="background: rgba(255,255,255,0.06); border: 1px solid var(--border); border-radius:10px; color:var(--text); padding:10px;" placeholder="Describe your issue..." required></textarea>
+              </div>
+              <button type="submit" class="btn-primary">Send Message</button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
 
   <script src="script.js"></script>
 </body>
-
 </html>
